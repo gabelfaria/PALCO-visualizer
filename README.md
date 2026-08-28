@@ -28,7 +28,7 @@ O estúdio está em [https://editorpalco.grok.me](https://editorpalco.grok.me).
 2. **Peças** — clique num sticker do pacote ou envie o seu PNG. Arraste no palco; os cantos redimensionam.
 3. **Looping** — selecione a peça e escolha o movimento. O slider de **intensidade** controla o quanto ela se mexe; **velocidade** o ritmo; **áudio** quanto o grave empurra.
 4. **Música** — importe um áudio. Modos como *Batida* e *Pop* reagem ao grave.
-5. **Gravar** — captura o palco (e a faixa, se estiver tocando). **Quadro** baixa um PNG 1920×1080 do frame atual.
+5. **Exportar** — o campo mostra a duração da faixa e gera o vídeo inteiro, sem gravar à mão. **Quadro** baixa um PNG 1920×1080 do frame atual. O botão vermelho ainda grava um clip se quiser parar no meio.
 
 No telemóvel, peças, animação e camadas ficam nas abas de baixo.
 
