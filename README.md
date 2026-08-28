@@ -2,7 +2,7 @@
 
 Estúdio de visualizers animados em **1920×1080**. Foto de fundo, peças em PNG, looping por camada e exportação em vídeo — pensado para clips, cortes e capas de música.
 
-**Abrir o Palco:** [editorpalco.vercel.app](https://editorpalco.vercel.app)
+**Abrir o Palco:** [palcovisualizer.vercel.app](https://palcovisualizer.vercel.app/)
 
 ![Palco](public/og.jpg)
 
@@ -22,7 +22,7 @@ Tudo roda no browser. Não precisa de conta.
 
 ## Como usar
 
-O estúdio está em [https://editorpalco.grok.me](https://editorpalco.grok.me).
+O estúdio está em [https://palcovisualizer.vercel.app](https://palcovisualizer.vercel.app/).
 
 1. **Fundo** — envie uma foto 1920×1080 ou escolha *Palco vazio* / *Bokeh*.
 2. **Peças** — clique num sticker do pacote ou envie o seu PNG. Arraste no palco; os cantos redimensionam.
