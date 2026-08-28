@@ -2,6 +2,8 @@
 
 Estúdio de visualizers animados em **1920×1080**. Foto de fundo, peças em PNG, looping por camada e exportação em vídeo — pensado para clips, cortes e capas de música.
 
+**Abrir o Palco:** [editorpalco.grok.me](https://editorpalco.grok.me)
+
 ![Palco](public/og.jpg)
 
 ## O que é
@@ -19,6 +21,8 @@ O Palco é um palco virtual: você monta a cena, escolhe como cada peça se mexe
 Tudo roda no browser. Não precisa de conta.
 
 ## Como usar
+
+O estúdio está em [https://editorpalco.grok.me](https://editorpalco.grok.me).
 
 1. **Fundo** — envie uma foto 1920×1080 ou escolha *Palco vazio* / *Bokeh*.
 2. **Peças** — clique num sticker do pacote ou envie o seu PNG. Arraste no palco; os cantos redimensionam.
