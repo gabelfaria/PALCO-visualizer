@@ -1,0 +1,72 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0a0a0b;
+  --color-surface: #131316;
+  --color-elevated: #1c1c21;
+  --color-foreground: #f2f0ea;
+  --color-muted: #9a9890;
+  --color-subtle: #6e6c66;
+  --color-primary: #e8e4d4;
+  --color-primary-foreground: #0a0a0b;
+  --color-border: #2a2a30;
+  --color-record: #c45c52;
+  --color-ring: #e8e4d4;
+  --color-canvas: #08080a;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100dvh;
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  img {
+    outline: 1px solid rgb(255 255 255 / 0.08);
+    outline-offset: -1px;
+  }
+
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-primary) 55%, transparent);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  [role="button"],
+  input {
+    transition-duration: 0.01ms !important;
+  }
+}
