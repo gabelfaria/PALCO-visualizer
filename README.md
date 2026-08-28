@@ -2,7 +2,7 @@
 
 Estúdio de visualizers animados em **1920×1080**. Foto de fundo, peças em PNG, looping por camada e exportação em vídeo — pensado para clips, cortes e capas de música.
 
-**Abrir o Palco:** [editorpalco.grok.me](https://editorpalco.grok.me)
+**Abrir o Palco:** [editorpalco.vercel.app](https://editorpalco.vercel.app)
 
 ![Palco](public/og.jpg)
 
