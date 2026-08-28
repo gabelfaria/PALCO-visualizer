@@ -19,6 +19,7 @@ class AudioEngine {
   bands: AudioBands = { ...SILENT, bins: this.freq };
   private beatHold = 0;
   private lastBass = 0;
+  file: File | null = null;
   name: string | null = null;
 
   constructor() {
@@ -48,7 +49,27 @@ class AudioEngine {
     this.dest = dest;
     this.freq = new Uint8Array(analyser.frequencyBinCount);
     this.bands.bins = this.freq;
-    if (ctx.state === "suspended") await ctx.resume();
+    if (ctx.state === "suspended") await this.ctx.resume();
+  }
+
+  async waitMetadata() {
+    if (Number.isFinite(this.el.duration) && this.el.duration > 0) return;
+    await new Promise<void>((resolve, reject) => {
+      const ok = () => {
+        cleanup();
+        resolve();
+      };
+      const fail = () => {
+        cleanup();
+        reject(new Error("áudio inválido"));
+      };
+      const cleanup = () => {
+        this.el.removeEventListener("loadedmetadata", ok);
+        this.el.removeEventListener("error", fail);
+      };
+      this.el.addEventListener("loadedmetadata", ok);
+      this.el.addEventListener("error", fail);
+    });
   }
 
   async loadFile(file: File) {
@@ -56,6 +77,9 @@ class AudioEngine {
     if (this.el.src.startsWith("blob:")) URL.revokeObjectURL(this.el.src);
     this.el.src = URL.createObjectURL(file);
     this.name = file.name;
+    this.file = file;
+    this.el.load();
+    await this.waitMetadata();
     await this.el.play().catch(() => undefined);
   }
 
@@ -74,8 +98,41 @@ class AudioEngine {
     this.el.pause();
   }
 
+  async rewind() {
+    this.el.currentTime = 0;
+    if (this.el.currentTime < 0.15) return;
+    await new Promise<void>((resolve) => {
+      const done = () => {
+        this.el.removeEventListener("seeked", done);
+        resolve();
+      };
+      this.el.addEventListener("seeked", done);
+      window.setTimeout(done, 500);
+    });
+  }
+
+  setLoop(v: boolean) {
+    this.el.loop = v;
+  }
+
   get playing() {
     return !this.el.paused && !this.el.ended;
+  }
+
+  get duration() {
+    const d = this.el.duration;
+    return Number.isFinite(d) ? d : 0;
+  }
+
+  get currentTime() {
+    return this.el.currentTime || 0;
+  }
+
+  async decodeBuffer(): Promise<AudioBuffer> {
+    if (!this.file) throw new Error("sem faixa");
+    await this.ensure();
+    const data = await this.file.arrayBuffer();
+    return this.ctx!.decodeAudioData(data.slice(0));
   }
 
   tick(): AudioBands {

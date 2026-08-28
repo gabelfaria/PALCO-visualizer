@@ -18,6 +18,7 @@ type StudioState = {
   vignette: number;
   grain: number;
   recording: boolean;
+  exporting: boolean;
   ready: boolean;
   past: ProjectSnapshot[];
   future: ProjectSnapshot[];
@@ -43,6 +44,7 @@ type StudioState = {
   setVignette: (v: number) => void;
   setGrain: (v: number) => void;
   setRecording: (v: boolean) => void;
+  setExporting: (v: boolean) => void;
   reset: () => void;
 };
 
@@ -149,6 +151,7 @@ export const useStudio = create<StudioState>((set, get) => ({
   playing: true,
   clock: 0,
   recording: false,
+  exporting: false,
   ready: false,
   past: [],
   future: [],
@@ -350,6 +353,7 @@ export const useStudio = create<StudioState>((set, get) => ({
     get().persistSoon();
   },
   setRecording: (v) => set({ recording: v }),
+  setExporting: (v) => set({ exporting: v }),
 
   reset: () => {
     const demo = defaultProject();

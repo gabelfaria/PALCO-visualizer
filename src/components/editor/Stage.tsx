@@ -44,6 +44,10 @@ export function Stage() {
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       const state = useStudio.getState();
+      if (state.exporting) {
+        raf = requestAnimationFrame(loop);
+        return;
+      }
       if (state.playing && !document.hidden) runtime.clock += dt;
       try {
         runtime.audio = getAudio().tick();
@@ -170,7 +174,7 @@ export function Stage() {
           onPointerCancel={onPointerUp}
         />
         <span className="pointer-events-none absolute right-2 bottom-2 rounded-sm bg-background/70 px-1.5 py-0.5 font-mono text-xs tracking-wide text-muted tabular-nums">
-          1920×1080
+          {recording ? "Exportando" : "1920×1080"}
         </span>
       </div>
     </div>

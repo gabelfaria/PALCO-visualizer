@@ -15,7 +15,7 @@ O Palco é um palco virtual: você monta a cena, escolhe como cada peça se mexe
 - Looping por peça: vibrar, balançar, girar e mais de 20 movimentos
 - Sliders de intensidade, velocidade e reação ao grave
 - Música importada (Web Audio) com spectrum opcional
-- Gravação do palco em WebM/MP4 + exportação de um quadro PNG
+- Exportação do visualizer com a duração da faixa + quadro PNG 1920×1080
 - Cena salva no navegador (IndexedDB)
 
 Tudo roda no browser. Não precisa de conta.
@@ -28,7 +28,7 @@ O estúdio está em [https://editorpalco.grok.me](https://editorpalco.grok.me).
 2. **Peças** — clique num sticker do pacote ou envie o seu PNG. Arraste no palco; os cantos redimensionam.
 3. **Looping** — selecione a peça e escolha o movimento. O slider de **intensidade** controla o quanto ela se mexe; **velocidade** o ritmo; **áudio** quanto o grave empurra.
 4. **Música** — importe um áudio. Modos como *Batida* e *Pop* reagem ao grave.
-5. **Exportar** — o campo mostra a duração da faixa e gera o vídeo inteiro, sem gravar à mão. **Quadro** baixa um PNG 1920×1080 do frame atual. O botão vermelho ainda grava um clip se quiser parar no meio.
+5. **Exportar** — o Palco monta o vídeo frame a frame com a duração da faixa (não grava em tempo real). Deixa a guia aberta até acabar. **Quadro** baixa um PNG 1920×1080.
 
 No telemóvel, peças, animação e camadas ficam nas abas de baixo.
 
@@ -88,7 +88,7 @@ Vinil, fones, microfone, fita, caixa, faísca, anéis, nota, raio e halo — pro
 - React 19 + TanStack Start + Tailwind v4
 - Canvas 2D (composição em 1920×1080)
 - Web Audio (`AnalyserNode`) para grave / batida / spectrum
-- `MediaRecorder` + `captureStream` para o vídeo
+- Exportação frame a frame (WebCodecs) com a duração da faixa
 - Zustand + IndexedDB para o projeto
 
 ## Desenvolvimento
@@ -107,13 +107,13 @@ npm run typecheck
 npm run build
 ```
 
-O palco interno é sempre 1920×1080; a UI só escala a pré-visualização. A gravação sai nesse tamanho.
+O palco interno é sempre 1920×1080; a UI só escala a pré-visualização. A exportação sai nesse tamanho.
 
 ## Estrutura
 
 ```
 src/components/editor/   UI do estúdio (palco, peças, inspector, transporte)
-src/lib/visualizer/      motor: animações, áudio, render, gravação, persistência
+src/lib/visualizer/      motor: animações, áudio, render, exportação, persistência
 public/backgrounds/      fundos 1920×1080
 public/overlays/         PNGs e SVGs do pacote
 ```

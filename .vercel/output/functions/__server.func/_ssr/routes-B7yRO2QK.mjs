@@ -1,6 +1,6 @@
 import { i as __toESM } from "../_runtime.mjs";
 import { c as require_react, r as Slot, s as require_jsx_runtime } from "../_libs/@radix-ui/react-collection+[...].mjs";
-import { C as ChevronUp, S as CircleHelp, _ as FlipHorizontal, a as Sticker, b as Copy, c as RotateCcw, d as Music2, f as Maximize, g as ImageDown, h as ImagePlus, i as Trash2, l as Play, m as LockOpen, n as Undo2, o as Square, p as Lock, s as Scan, t as X, u as Pause, v as Eye, w as ChevronDown, x as Circle, y as EyeOff } from "../_libs/lucide-react.mjs";
+import { C as CircleHelp, S as Circle, T as ChevronDown, _ as FlipHorizontal, a as Sticker, b as Download, c as RotateCcw, d as Music2, f as Maximize, g as ImageDown, h as ImagePlus, i as Trash2, l as Play, m as LockOpen, n as Undo2, o as Square, p as Lock, s as Scan, t as X, u as Pause, v as Eye, w as ChevronUp, x as Copy, y as EyeOff } from "../_libs/lucide-react.mjs";
 import { a as DialogOverlay$1, c as DialogTrigger$1, i as DialogDescription$1, n as DialogClose, o as DialogPortal$1, r as DialogContent$1, s as DialogTitle$1, t as Dialog$1 } from "../_libs/@radix-ui/react-dialog+[...].mjs";
 import { n as toast, t as Toaster } from "../_libs/sonner.mjs";
 import { t as create } from "../_libs/zustand.mjs";
@@ -9,11 +9,12 @@ import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { t as Root } from "../_libs/radix-ui__react-label.mjs";
 import { i as SliderTrack, n as SliderRange, r as SliderThumb, t as Slider$1 } from "../_libs/@radix-ui/react-slider+[...].mjs";
 import { n as SwitchThumb, t as Switch$1 } from "../_libs/radix-ui__react-switch.mjs";
+import { a as CanvasSource, c as canEncodeAudio, i as AudioBufferSource, l as canEncodeVideo, n as Mp4OutputFormat, o as BufferTarget, r as WebMOutputFormat, s as QUALITY_HIGH, t as Output } from "../_libs/mediabunny.mjs";
 import { i as Viewport, n as Scrollbar, r as Thumb, t as Root$1 } from "../_libs/radix-ui__react-scroll-area.mjs";
 import { t as Root$2 } from "../_libs/radix-ui__react-separator.mjs";
 import { i as Trigger, n as List, r as Root2, t as Content } from "../_libs/radix-ui__react-tabs.mjs";
 import { t as Provider } from "../_libs/radix-ui__react-tooltip.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-BY7hI1k2.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-B7yRO2QK.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var BACKGROUNDS = [{
@@ -268,10 +269,10 @@ function applySnapshot(s) {
 var persistTimer = null;
 var useStudio = create((set, get) => ({
 	...applySnapshot(defaultProject()),
-	selectedId: null,
 	playing: true,
 	clock: 0,
 	recording: false,
+	exporting: false,
 	ready: false,
 	past: [],
 	future: [],
@@ -464,6 +465,7 @@ var useStudio = create((set, get) => ({
 		get().persistSoon();
 	},
 	setRecording: (v) => set({ recording: v }),
+	setExporting: (v) => set({ exporting: v }),
 	reset: () => {
 		const demo = defaultProject();
 		get().commit();
@@ -1238,6 +1240,7 @@ var AudioEngine = class {
 	};
 	beatHold = 0;
 	lastBass = 0;
+	file = null;
 	name = null;
 	constructor() {
 		this.el = document.createElement("audio");
@@ -1265,13 +1268,35 @@ var AudioEngine = class {
 		this.dest = dest;
 		this.freq = new Uint8Array(analyser.frequencyBinCount);
 		this.bands.bins = this.freq;
-		if (ctx.state === "suspended") await ctx.resume();
+		if (ctx.state === "suspended") await this.ctx.resume();
+	}
+	async waitMetadata() {
+		if (Number.isFinite(this.el.duration) && this.el.duration > 0) return;
+		await new Promise((resolve, reject) => {
+			const ok = () => {
+				cleanup();
+				resolve();
+			};
+			const fail = () => {
+				cleanup();
+				reject(/* @__PURE__ */ new Error("áudio inválido"));
+			};
+			const cleanup = () => {
+				this.el.removeEventListener("loadedmetadata", ok);
+				this.el.removeEventListener("error", fail);
+			};
+			this.el.addEventListener("loadedmetadata", ok);
+			this.el.addEventListener("error", fail);
+		});
 	}
 	async loadFile(file) {
 		await this.ensure();
 		if (this.el.src.startsWith("blob:")) URL.revokeObjectURL(this.el.src);
 		this.el.src = URL.createObjectURL(file);
 		this.name = file.name;
+		this.file = file;
+		this.el.load();
+		await this.waitMetadata();
 		await this.el.play().catch(() => void 0);
 	}
 	async toggle() {
@@ -1286,8 +1311,36 @@ var AudioEngine = class {
 	pause() {
 		this.el.pause();
 	}
+	async rewind() {
+		this.el.currentTime = 0;
+		if (this.el.currentTime < .15) return;
+		await new Promise((resolve) => {
+			const done = () => {
+				this.el.removeEventListener("seeked", done);
+				resolve();
+			};
+			this.el.addEventListener("seeked", done);
+			window.setTimeout(done, 500);
+		});
+	}
+	setLoop(v) {
+		this.el.loop = v;
+	}
 	get playing() {
 		return !this.el.paused && !this.el.ended;
+	}
+	get duration() {
+		const d = this.el.duration;
+		return Number.isFinite(d) ? d : 0;
+	}
+	get currentTime() {
+		return this.el.currentTime || 0;
+	}
+	async decodeBuffer() {
+		if (!this.file) throw new Error("sem faixa");
+		await this.ensure();
+		const data = await this.file.arrayBuffer();
+		return this.ctx.decodeAudioData(data.slice(0));
 	}
 	tick() {
 		if (!this.analyser || this.el.paused) {
@@ -1545,6 +1598,10 @@ function Stage() {
 			const dt = Math.min(.1, (now - last) / 1e3);
 			last = now;
 			const state = useStudio.getState();
+			if (state.exporting) {
+				raf = requestAnimationFrame(loop);
+				return;
+			}
 			if (state.playing && !document.hidden) runtime.clock += dt;
 			try {
 				runtime.audio = getAudio().tick();
@@ -1655,7 +1712,7 @@ function Stage() {
 				onPointerCancel: onPointerUp
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 				className: "pointer-events-none absolute right-2 bottom-2 rounded-sm bg-background/70 px-1.5 py-0.5 font-mono text-xs tracking-wide text-muted tabular-nums",
-				children: "1920×1080"
+				children: recording ? "Exportando" : "1920×1080"
 			})]
 		})
 	});
@@ -1666,6 +1723,181 @@ function Switch({ className, ...props }) {
 		...props,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SwitchThumb, { className: "pointer-events-none block size-5 translate-x-0.5 rounded-full bg-foreground transition-transform duration-150 ease-out data-[state=checked]:translate-x-[18px] data-[state=checked]:bg-primary-foreground" })
 	});
+}
+var FFT = 2048;
+var BINS = FFT / 2;
+var MIN_DB = -100;
+var SMOOTH = .78;
+function fftInPlace(re, im) {
+	const n = re.length;
+	for (let i = 1, j = 0; i < n; i++) {
+		let bit = n >> 1;
+		for (; j & bit; bit >>= 1) j ^= bit;
+		j ^= bit;
+		if (i < j) {
+			const tr = re[i];
+			re[i] = re[j];
+			re[j] = tr;
+			const ti = im[i];
+			im[i] = im[j];
+			im[j] = ti;
+		}
+	}
+	for (let len = 2; len <= n; len <<= 1) {
+		const ang = 2 * Math.PI / len;
+		const wlenRe = Math.cos(ang);
+		const wlenIm = Math.sin(ang);
+		const half = len >> 1;
+		for (let i = 0; i < n; i += len) {
+			let wRe = 1;
+			let wIm = 0;
+			for (let j = 0; j < half; j++) {
+				const p = i + j;
+				const q = p + half;
+				const vr = re[q] * wRe - im[q] * wIm;
+				const vi = re[q] * wIm + im[q] * wRe;
+				re[q] = re[p] - vr;
+				im[q] = im[p] - vi;
+				re[p] += vr;
+				im[p] += vi;
+				const nRe = wRe * wlenRe - wIm * wlenIm;
+				wIm = wRe * wlenIm + wIm * wlenRe;
+				wRe = nRe;
+			}
+		}
+	}
+}
+var OfflineAnalyser = class {
+	ch0;
+	ch1;
+	sr;
+	re = new Float32Array(FFT);
+	im = new Float32Array(FFT);
+	mag = new Float32Array(BINS);
+	bins = new Uint8Array(BINS);
+	lastBass = 0;
+	beatHold = 0;
+	constructor(buffer) {
+		this.ch0 = buffer.getChannelData(0);
+		this.ch1 = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : null;
+		this.sr = buffer.sampleRate;
+	}
+	at(time) {
+		const start = Math.floor(time * this.sr);
+		const len = this.ch0.length;
+		for (let i = 0; i < FFT; i++) {
+			const idx = start + i;
+			let s = 0;
+			if (idx >= 0 && idx < len) {
+				s = this.ch0[idx];
+				if (this.ch1) s = (s + (this.ch1[idx] ?? 0)) * .5;
+			}
+			const hann = .5 * (1 - Math.cos(2 * Math.PI * i / 2047));
+			this.re[i] = s * hann;
+			this.im[i] = 0;
+		}
+		fftInPlace(this.re, this.im);
+		const range = 70;
+		for (let i = 0; i < BINS; i++) {
+			const mag = Math.hypot(this.re[i], this.im[i]) / FFT;
+			const db = mag > 1e-12 ? 20 * Math.log10(mag) : MIN_DB;
+			const byte = Math.max(0, Math.min(255, (db - MIN_DB) / range * 255));
+			this.mag[i] = SMOOTH * this.mag[i] + .21999999999999997 * byte;
+			this.bins[i] = this.mag[i];
+		}
+		const avg = (from, to) => {
+			let s = 0;
+			const a = Math.max(0, from);
+			const b = Math.min(BINS, to);
+			for (let i = a; i < b; i++) s += this.bins[i] ?? 0;
+			return b > a ? s / (b - a) / 255 : 0;
+		};
+		const bass = Math.pow(avg(0, 12), .85);
+		const mid = avg(12, 80);
+		const treble = avg(80, 280);
+		const peak = Math.max(bass, mid, treble);
+		const onset = bass - this.lastBass;
+		this.lastBass = bass;
+		if (onset > .08 && bass > .32 && this.beatHold < .2) this.beatHold = 1;
+		else this.beatHold = Math.max(0, this.beatHold - .045);
+		return {
+			bass,
+			mid,
+			treble,
+			peak,
+			beat: this.beatHold,
+			bins: this.bins
+		};
+	}
+};
+async function exportVisualizer(opts) {
+	const { canvas, buffer, project, signal } = opts;
+	const ctx = canvas.getContext("2d", { alpha: false });
+	if (!ctx) throw new Error("canvas indisponível");
+	const duration = buffer.duration;
+	const frames = Math.max(1, Math.round(duration * 30));
+	const frameDur = 1 / 30;
+	const wantAvc = await canEncodeVideo("avc", {
+		width: STAGE_W,
+		height: STAGE_H,
+		quality: QUALITY_HIGH
+	});
+	const wantAac = await canEncodeAudio("aac");
+	const mp4 = wantAvc && wantAac;
+	const target = new BufferTarget();
+	const output = new Output({
+		format: mp4 ? new Mp4OutputFormat() : new WebMOutputFormat(),
+		target
+	});
+	const video = new CanvasSource(canvas, {
+		codec: mp4 ? "avc" : "vp9",
+		quality: QUALITY_HIGH,
+		keyFrameInterval: 2
+	});
+	output.addVideoTrack(video, { frameRate: 30 });
+	const audio = new AudioBufferSource({
+		codec: mp4 ? "aac" : "opus",
+		quality: QUALITY_HIGH
+	});
+	output.addAudioTrack(audio);
+	const analyser = new OfflineAnalyser(buffer);
+	await output.start();
+	try {
+		if (signal.aborted) throw new DOMException("aborted", "AbortError");
+		await audio.add(buffer);
+		for (let i = 0; i < frames; i++) {
+			if (signal.aborted) throw new DOMException("aborted", "AbortError");
+			const t = i * frameDur;
+			renderFrame(ctx, project, t, analyser.at(t), null);
+			await video.add(t, frameDur);
+			if (i % 4 === 0) {
+				opts.onProgress?.({
+					frame: i + 1,
+					frames,
+					time: t,
+					duration
+				});
+				if (document.visibilityState === "visible") await new Promise((r) => requestAnimationFrame(() => r()));
+			}
+		}
+		opts.onProgress?.({
+			frame: frames,
+			frames,
+			time: duration,
+			duration
+		});
+		await output.finalize();
+	} catch (err) {
+		await output.cancel().catch(() => void 0);
+		throw err;
+	}
+	const bytes = target.buffer;
+	if (!bytes) throw new Error("ficheiro vazio");
+	const ext = mp4 ? "mp4" : "webm";
+	return {
+		blob: new Blob([bytes], { type: mp4 ? "video/mp4" : "video/webm" }),
+		ext
+	};
 }
 function pickMime() {
 	for (const c of [
@@ -1689,6 +1921,23 @@ function downloadBlob(blob, filename) {
 	a.download = filename;
 	a.click();
 	URL.revokeObjectURL(url);
+}
+function formatClock(seconds) {
+	if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
+	const total = Math.floor(seconds);
+	const m = Math.floor(total / 60);
+	const s = total % 60;
+	return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+function fileStem(name) {
+	return (name.replace(/\.[^.]+$/, "").replace(/[<>:"/\\|?*]+/g, "").trim() || "visualizer").slice(0, 48);
+}
+function stopCapture(rec) {
+	if (rec.state === "inactive") return;
+	try {
+		rec.requestData();
+	} catch {}
+	rec.stop();
 }
 function BassMeter() {
 	const ref = (0, import_react.useRef)(null);
@@ -1723,17 +1972,36 @@ function Transport() {
 	const audioInput = (0, import_react.useRef)(null);
 	const recRef = (0, import_react.useRef)(null);
 	const chunks = (0, import_react.useRef)([]);
+	const abortRef = (0, import_react.useRef)(null);
 	const [track, setTrack] = (0, import_react.useState)(null);
 	const [elapsed, setElapsed] = (0, import_react.useState)(0);
+	const [now, setNow] = (0, import_react.useState)(0);
+	const [duration, setDuration] = (0, import_react.useState)(0);
+	const [exporting, setExporting] = (0, import_react.useState)(false);
 	(0, import_react.useEffect)(() => {
-		const id = window.setInterval(() => setElapsed(runtime.clock), 250);
+		const id = window.setInterval(() => {
+			setElapsed(runtime.clock);
+			try {
+				const a = getAudio();
+				setNow(a.currentTime);
+				if (a.duration > 0) setDuration(a.duration);
+			} catch {}
+		}, 200);
 		return () => window.clearInterval(id);
 	}, []);
 	async function onMusic(file) {
-		await getAudio().loadFile(file);
-		setTrack(file.name);
-		useStudio.getState().setPlaying(true);
-		toast("Música pronta — o looping reage ao grave");
+		try {
+			const audio = getAudio();
+			await audio.loadFile(file);
+			setTrack(file.name);
+			setDuration(audio.duration);
+			setNow(audio.currentTime);
+			useStudio.getState().setPlaying(true);
+			toast("Música pronta — o looping reage ao grave");
+		} catch (err) {
+			console.error(err);
+			toast("Não deu para ler a música");
+		}
 	}
 	function exportFrame() {
 		const canvas = runtime.canvas;
@@ -1745,8 +2013,9 @@ function Transport() {
 		}, "image/png");
 	}
 	async function toggleRecord() {
+		if (exporting) return;
 		if (recording) {
-			recRef.current?.stop();
+			recRef.current && stopCapture(recRef.current);
 			return;
 		}
 		const canvas = runtime.canvas;
@@ -1775,56 +2044,127 @@ function Transport() {
 		recRef.current = rec;
 		toast("Gravando o palco…");
 	}
-	const mm = Math.floor(elapsed / 60);
-	const ss = Math.floor(elapsed % 60);
+	async function exportTrack() {
+		if (exporting) {
+			abortRef.current?.abort();
+			return;
+		}
+		const canvas = runtime.canvas;
+		if (!canvas) return;
+		const audio = getAudio();
+		if (!audio.name || !audio.file) {
+			toast("Importe uma música para exportar");
+			audioInput.current?.click();
+			return;
+		}
+		const ac = new AbortController();
+		abortRef.current = ac;
+		setExporting(true);
+		setNow(0);
+		audio.pause();
+		useStudio.getState().setPlaying(false);
+		useStudio.getState().setRecording(true);
+		useStudio.getState().setExporting(true);
+		let wake = null;
+		try {
+			wake = await navigator.wakeLock?.request("screen");
+		} catch {}
+		const onHidden = () => {
+			if (document.visibilityState === "hidden") toast("A guia foi para segundo plano — o Chrome pode pausar. Deixa o Palco visível até acabar.");
+		};
+		document.addEventListener("visibilitychange", onHidden);
+		try {
+			const buffer = await audio.decodeBuffer();
+			const length = buffer.duration;
+			if (!(length > .05)) throw new Error("duração inválida");
+			setDuration(length);
+			toast("A montar o vídeo frame a frame — mais rápido que a música");
+			const { blob, ext } = await exportVisualizer({
+				canvas,
+				buffer,
+				project: useStudio.getState().snapshot(),
+				signal: ac.signal,
+				onProgress: (p) => {
+					setNow(p.time);
+					setDuration(p.duration);
+				}
+			});
+			downloadBlob(blob, `palco-${fileStem(audio.name)}.${ext}`);
+			toast(`Visualizer exportado · ${formatClock(length)}`);
+		} catch (err) {
+			if (ac.signal.aborted || err instanceof DOMException && err.name === "AbortError") toast("Exportação cancelada");
+			else {
+				console.error(err);
+				toast("Não deu para exportar o vídeo");
+			}
+		} finally {
+			document.removeEventListener("visibilitychange", onHidden);
+			await wake?.release().catch(() => void 0);
+			useStudio.getState().setRecording(false);
+			useStudio.getState().setExporting(false);
+			setExporting(false);
+			abortRef.current = null;
+		}
+	}
+	const pct = duration > 0 ? Math.min(1, (exporting ? now : 0) / duration) : 0;
+	const clockLabel = duration > 0 ? `${formatClock(now)} / ${formatClock(duration)}` : formatClock(elapsed);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "flex flex-col gap-3 border-t border-border bg-surface px-3 py-3 md:flex-row md:items-center md:gap-4 md:px-5",
+		className: "relative flex flex-wrap items-center gap-3 border-t border-border bg-surface px-3 py-3 md:gap-4 md:px-5",
 		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "pointer-events-none absolute inset-x-0 top-0 h-0.5 overflow-hidden bg-elevated",
+				"aria-hidden": !exporting,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: cn("h-full origin-left bg-primary transition-transform duration-150", !exporting && "scale-x-0"),
+					style: { transform: `scaleX(${exporting ? pct : 0})` }
+				})
+			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "flex items-center gap-2",
+				className: "flex shrink-0 items-center gap-2",
 				children: [
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 						variant: "secondary",
 						size: "icon",
 						"aria-label": playing ? "Pausar" : "Tocar",
+						disabled: exporting,
 						onClick: () => {
 							const next = !playing;
 							useStudio.getState().setPlaying(next);
 							if (next) getAudio().ensure();
+							else getAudio().pause();
 						},
 						children: playing ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Pause, {}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Play, { className: "ml-0.5" })
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-						variant: recording ? "record" : "secondary",
+						variant: recording && !exporting ? "record" : "secondary",
 						size: "icon",
-						"aria-label": recording ? "Parar gravação" : "Gravar",
+						"aria-label": recording && !exporting ? "Parar gravação" : "Gravar clip",
+						disabled: exporting,
 						onClick: () => void toggleRecord(),
-						children: recording ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Square, {}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Circle, { className: "fill-current" })
+						children: recording && !exporting ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Square, {}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Circle, { className: "fill-current" })
 					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 						className: "font-mono text-xs text-muted tabular-nums",
-						children: [
-							String(mm).padStart(2, "0"),
-							":",
-							String(ss).padStart(2, "0")
-						]
+						children: clockLabel
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BassMeter, {})
 				]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "flex min-w-0 flex-1 items-center gap-2",
+				className: "flex shrink-0 items-center gap-2",
 				children: [
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
 						variant: "secondary",
 						size: "sm",
 						onClick: () => audioInput.current?.click(),
+						disabled: exporting,
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Music2, {}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 							className: "max-w-40 truncate",
 							children: track ?? "Música"
 						})]
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						id: "palco-audio",
 						ref: audioInput,
 						type: "file",
 						accept: "audio/*",
@@ -1835,16 +2175,36 @@ function Transport() {
 							e.target.value = "";
 						}
 					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "relative z-10 flex items-center gap-2 rounded-md bg-elevated px-2 py-1 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex flex-col leading-none",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-xs tracking-wide text-subtle",
+								children: "Exportar"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "font-mono text-xs text-foreground tabular-nums",
+								children: duration > 0 ? formatClock(duration) : "—"
+							})]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+							size: "sm",
+							variant: exporting ? "record" : "default",
+							onClick: () => void exportTrack(),
+							"aria-label": exporting ? "Cancelar exportação" : "Exportar visualizer com a duração da música",
+							children: [exporting ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Square, {}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Download, {}), exporting ? "Cancelar" : "Exportar"]
+						})]
+					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
 						variant: "secondary",
 						size: "sm",
 						onClick: exportFrame,
+						disabled: exporting,
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ImageDown, {}), " Quadro"]
 					})
 				]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "flex flex-wrap items-center gap-4",
+				className: "ml-auto flex shrink-0 flex-wrap items-center gap-4",
 				children: [
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
 						className: "flex items-center gap-2 text-xs text-muted",
@@ -2008,6 +2368,7 @@ function Editor() {
 			}
 			if (e.key === " ") {
 				e.preventDefault();
+				if (s.recording) return;
 				s.setPlaying(!s.playing);
 				return;
 			}
@@ -2120,7 +2481,7 @@ function Header() {
 					})
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DialogContent, { children: [
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DialogTitle, { children: "Como usar" }),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DialogDescription, { children: "Coloque uma foto 1920×1080 no fundo, solte PNGs no palco e escolha o looping de cada peça. O slider de intensidade controla o quanto ela se mexe. Importe uma música para a batida empurrar as animações. Grave o palco para exportar o visualizer." }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DialogDescription, { children: "Coloque uma foto 1920×1080 no fundo, solte PNGs no palco e escolha o looping de cada peça. O slider de intensidade controla o quanto ela se mexe. Importe uma música e use Exportar — o Palco monta o vídeo frame a frame com a duração da faixa, sem gravar em tempo real. Deixa a guia aberta até acabar." }),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
 						className: "mt-4 space-y-1.5 text-sm text-muted",
 						children: [

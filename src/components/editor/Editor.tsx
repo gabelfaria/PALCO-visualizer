@@ -47,6 +47,7 @@ export function Editor() {
       }
       if (e.key === " ") {
         e.preventDefault();
+        if (s.recording) return;
         s.setPlaying(!s.playing);
         return;
       }
@@ -133,8 +134,9 @@ function Header() {
           <DialogTitle>Como usar</DialogTitle>
           <DialogDescription>
             Coloque uma foto 1920×1080 no fundo, solte PNGs no palco e escolha o looping de cada
-            peça. O slider de intensidade controla o quanto ela se mexe. Importe uma música para a
-            batida empurrar as animações. Grave o palco para exportar o visualizer.
+            peça. O slider de intensidade controla o quanto ela se mexe. Importe uma música e
+            use Exportar — o Palco monta o vídeo frame a frame com a duração da faixa, sem gravar
+            em tempo real. Deixa a guia aberta até acabar.
           </DialogDescription>
           <ul className="mt-4 space-y-1.5 text-sm text-muted">
             <li>Espaço — tocar / pausar</li>

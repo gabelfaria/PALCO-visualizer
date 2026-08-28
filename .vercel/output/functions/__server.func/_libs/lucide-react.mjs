@@ -154,6 +154,29 @@ var Copy = createLucideIcon("copy", [["rect", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Download = createLucideIcon("download", [
+	["path", {
+		d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
+		key: "ih7n3h"
+	}],
+	["polyline", {
+		points: "7 10 12 15 17 10",
+		key: "2ggqvy"
+	}],
+	["line", {
+		x1: "12",
+		x2: "12",
+		y1: "15",
+		y2: "3",
+		key: "1vk2je"
+	}]
+]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var EyeOff = createLucideIcon("eye-off", [
 	["path", {
 		d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
@@ -541,4 +564,4 @@ var X = createLucideIcon("x", [["path", {
 	key: "d8bk6v"
 }]]);
 //#endregion
-export { ChevronUp as C, CircleHelp as S, FlipHorizontal as _, Sticker as a, Copy as b, RotateCcw as c, Music2 as d, Maximize as f, ImageDown as g, ImagePlus as h, Trash2 as i, Play as l, LockOpen as m, Undo2 as n, Square as o, Lock as p, TriangleAlert as r, Scan as s, X as t, Pause as u, Eye as v, ChevronDown as w, Circle as x, EyeOff as y };
+export { CircleHelp as C, Circle as S, ChevronDown as T, FlipHorizontal as _, Sticker as a, Download as b, RotateCcw as c, Music2 as d, Maximize as f, ImageDown as g, ImagePlus as h, Trash2 as i, Play as l, LockOpen as m, Undo2 as n, Square as o, Lock as p, TriangleAlert as r, Scan as s, X as t, Pause as u, Eye as v, ChevronUp as w, Copy as x, EyeOff as y };
